@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="ir_cron_customer_rating_revaluation" model="ir.cron">
+        <field name="name">Customer Rating Re-evaluation Scheduler</field>
+        <field name="model_id" ref="model_customer_rating"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_create_revaluation_activities()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+        <field name="active">True</field>
+    </record>
+</odoo>

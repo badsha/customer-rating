@@ -1,0 +1,7 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_customer_rating_user,customer.rating user,model_customer_rating,base.group_user,1,1,1,1
+access_customer_rating_criteria_user,customer.rating.criteria user,model_customer_rating_criteria,base.group_user,1,1,1,1
+access_customer_rating_history_user,customer.rating.history user,model_customer_rating_history,base.group_user,1,0,1,0
+access_final_criteria_user,final.criteria user,model_final_criteria,base.group_system,1,1,1,1
+access_final_criteria_line_user,final.criteria.line user,model_final_criteria_line,base.group_system,1,1,1,1
+access_final_criteria_line_delete_wizard_user,final.criteria.line.delete.wizard user,model_final_criteria_line_delete_wizard,base.group_system,1,1,1,1

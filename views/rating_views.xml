@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+<data>
+    <record id="view_customer_rating_list" model="ir.ui.view">
+        <field name="name">customer.rating.list</field>
+        <field name="model">customer.rating</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="customer_id"/>
+                <field name="rating_stars" widget="html" string="Rating"/>
+                <field name="rating" optional="hide"/>
+                <field name="rating_bucket"
+                       widget="badge"
+                       decoration-danger="rating_bucket == 'low'"
+                       decoration-warning="rating_bucket == 'medium'"
+                       decoration-success="rating_bucket == 'high'"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_customer_rating_search" model="ir.ui.view">
+        <field name="name">customer.rating.search</field>
+        <field name="model">customer.rating</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="customer_id"/>
+                <filter name="tag_low" string="Low Tag" domain="[('rating_bucket','=','low')]"/>
+                <filter name="tag_medium" string="Medium Tag" domain="[('rating_bucket','=','medium')]"/>
+                <filter name="tag_high" string="High Tag" domain="[('rating_bucket','=','high')]"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_customer_rating_form" model="ir.ui.view">
+        <field name="name">customer.rating.form</field>
+        <field name="model">customer.rating</field>
+        <field name="arch" type="xml">
+            <form edit="0" create="0">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="customer_id"/>
+                            <field name="rating_bucket" widget="badge"/>
+                        </group>
+                        <group>
+                            <label for="rating_stars" string="Average Score"/>
+                            <div class="o_row">
+                                <field name="rating_stars" widget="html" nolabel="1"/>
+                                <field name="rating" readonly="1" class="oe_inline"/>
+                            </div>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Criteria">
+                            <field name="criteria_ids">
+                                <list editable="bottom" create="0" delete="0">
+                                    <field name="name" readonly="1" force_save="1"/>
+                                    <field name="score" widget="priority" readonly="1"/>
+                                    <field name="notes" readonly="1"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Notes">
+                            <field name="notes" readonly="1"/>
+                        </page>
+                        <page string="Timeline">
+                            <field name="history_ids" readonly="1">
+                                <list create="0" delete="0" edit="0">
+                                    <field name="changed_on"/>
+                                    <field name="changed_by"/>
+                                    <field name="change_type"/>
+                                    <field name="before_score"/>
+                                    <field name="after_score"/>
+                                    <field name="summary"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_customer_rating" model="ir.actions.act_window">
+        <field name="name">Customer Ratings</field>
+        <field name="res_model">customer.rating</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_customer_rating_search"/>
+    </record>
+
+    <menuitem id="menu_customer_rating_root" name="Customer Ratings" sequence="10"/>
+    <menuitem id="menu_customer_rating_main" name="View Ratings" parent="menu_customer_rating_root" action="action_customer_rating"/>
+</data>
+</odoo>
