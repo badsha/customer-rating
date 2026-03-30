@@ -59,10 +59,9 @@ class CustomerRating(models.Model):
     )
     history_ids = fields.One2many("customer.rating.history", "rating_id", string="Timeline", readonly=True)
 
-    _unique_customer_id = models.Constraint(
-        "UNIQUE (customer_id)",
-        "Only one rating is allowed per customer.",
-    )
+    _sql_constraints = [
+        ("unique_customer_id", "UNIQUE (customer_id)", "Only one rating is allowed per customer."),
+    ]
 
     @api.model
     def get_rating_map(self, partner_ids):
@@ -344,18 +343,45 @@ class CustomerRatingCriteria(models.Model):
             """
         )
 
-    @api.model_create_multi
     def create(self, vals_list):
         for vals in vals_list:
             if not vals.get("customer_id") and vals.get("rating_id"):
                 rating = self.env["customer.rating"].browse(vals["rating_id"])
                 vals["customer_id"] = rating.customer_id.id
-        return super().create(vals_list)
+        records = super().create(vals_list)
+        for record in records:
+            if record.rating_id:
+                record.rating_id._log_history("manual_update")
+        return records
 
-    _unique_template_line = models.Constraint(
-        "UNIQUE (rating_id, template_line_id)",
-        "A template criterion can appear only once per customer rating.",
-    )
+    def write(self, vals):
+        # Snapshot parents before changes
+        parents = self.mapped("rating_id")
+        before_maps = {parent.id: parent._snapshot_map() for parent in parents}
+        
+        result = super().write(vals)
+        
+        # Log history for each unique parent
+        for parent in parents:
+            parent._log_history("manual_update", before_maps.get(parent.id))
+        return result
+
+    def unlink(self):
+        # Snapshot parents before deletion
+        parents = self.mapped("rating_id")
+        before_maps = {parent.id: parent._snapshot_map() for parent in parents}
+        
+        result = super().unlink()
+        
+        # Log history for each unique parent
+        for parent in parents:
+            if parent.exists():
+                parent._log_history("manual_update", before_maps.get(parent.id))
+        return result
+
+    _sql_constraints = [
+        ("unique_template_line", "UNIQUE (rating_id, template_line_id)", "A template criterion can appear only once per customer rating."),
+    ]
 
 
 class CustomerRatingHistory(models.Model):

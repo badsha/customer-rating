@@ -20,6 +20,12 @@
 
             <xpath expr="//notebook" position="inside">
                 <page string="Ratings" name="customer_rating_tab">
+                    <header>
+                        <button name="action_sync_customer_rating" type="object" string="Sync Rating" class="btn-primary" invisible="criteria_ids"/>
+                    </header>
+                    <div class="alert alert-info" role="alert" invisible="criteria_ids">
+                        No rating found for this customer. Click "Sync Rating" to initialize.
+                    </div>
                     <field name="customer_rating_id" invisible="1"/>
                     <field name="criteria_ids" readonly="0">
                         <list editable="bottom" create="0" delete="0">

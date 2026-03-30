@@ -38,8 +38,12 @@ class ResPartner(models.Model):
         for partner in self:
             partner.customer_rating_id = partner.customer_rating_ids[:1]
 
+    def action_sync_customer_rating(self):
+        self._ensure_customer_rating()
+        return True
+
     def _ensure_customer_rating(self):
-        """Helper to create and sync rating record when the tab is visited/accessed."""
+        """Helper to create and sync rating record."""
         for partner in self:
             # Skip if it's a new record or transient
             p_id = partner._origin.id or partner.id
@@ -56,10 +60,6 @@ class ResPartner(models.Model):
             if not rating.criteria_ids:
                 rating._sync_from_template()
 
-    def web_read(self, specification):
-        if specification and "criteria_ids" in specification:
-            self._ensure_customer_rating()
-        return super().web_read(specification)
 
     @api.depends("customer_rating_ids", "customer_rating_ids.rating", "customer_rating_ids.rating_stars")
     def _compute_customer_rating_display(self):
