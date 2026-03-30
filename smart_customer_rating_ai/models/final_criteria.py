@@ -12,10 +12,7 @@ class FinalCriteria(models.Model):
     criteria_count = fields.Integer(string="# Criteria", compute="_compute_criteria_count", store=True)
 
     def init(self):
-        # Keep existing databases aligned with the renamed master record.
-        self._cr.execute(
-            "UPDATE final_criteria SET name = 'Criteria' WHERE lower(name) = 'service'"
-        )
+        super().init()
         # Ensure the default assessment record always exists.
         self._cr.execute(
             """
@@ -53,7 +50,7 @@ class FinalCriteriaLine(models.Model):
             "name": "Delete Criteria",
             "res_model": "final.criteria.line.delete.wizard",
             "view_mode": "form",
-            "view_id": self.env.ref("customer_rating.view_final_criteria_line_delete_wizard_form").id,
+            "view_id": self.env.ref("smart_customer_rating_ai.view_final_criteria_line_delete_wizard_form").id,
             "target": "new",
             "context": {"default_line_id": self.id},
         }

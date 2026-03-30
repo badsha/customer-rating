@@ -1,23 +1,35 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-<data>
     <record id="view_partner_form_customer_rating" model="ir.ui.view">
         <field name="name">res.partner.form.customer.rating</field>
         <field name="model">res.partner</field>
         <field name="inherit_id" ref="base.view_partner_form"/>
         <field name="arch" type="xml">
-            <xpath expr="//div[contains(@class, 'oe_button_box')]" position="inside">
-                <button class="oe_stat_button"
-                        name="action_open_customer_rating"
-                        type="object"
-                        icon="fa-star">
+            <xpath expr="//div[hasclass('oe_button_box')]" position="inside">
+                <button class="oe_stat_button" name="action_open_customer_rating" type="object" icon="fa-star">
                     <field name="customer_rating_count" widget="statinfo" string="Rating"/>
                 </button>
             </xpath>
+
             <xpath expr="//field[@name='vat']" position="after">
-                <field name="customer_rating_stars" widget="html" readonly="1"/>
+                <label for="customer_rating_stars" string="Final Rating"/>
+                <div class="o_row">
+                    <field name="customer_rating_stars" widget="html" readonly="1"/>
+                </div>
+            </xpath>
+
+            <xpath expr="//notebook" position="inside">
+                <page string="Ratings" name="customer_rating_tab">
+                    <field name="customer_rating_id" invisible="1"/>
+                    <field name="criteria_ids" readonly="0">
+                        <list editable="bottom" create="0" delete="0">
+                            <field name="name" readonly="1" force_save="1"/>
+                            <field name="score" widget="priority" force_save="1" options="{'max': 5}"/>
+                            <field name="notes" placeholder="Optional comments..." force_save="1"/>
+                        </list>
+                    </field>
+                </page>
             </xpath>
         </field>
     </record>
-</data>
 </odoo>

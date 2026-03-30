@@ -2,7 +2,6 @@ import json
 from datetime import timedelta
 
 from odoo import _, api, fields, models
-from odoo.exceptions import ValidationError
 
 
 class CustomerRating(models.Model):
@@ -60,28 +59,10 @@ class CustomerRating(models.Model):
     )
     history_ids = fields.One2many("customer.rating.history", "rating_id", string="Timeline", readonly=True)
 
-    _sql_constraints = [
-        (
-            "customer_rating_unique_customer",
-            "unique(customer_id)",
-            "Only one rating is allowed per customer.",
-        ),
-    ]
-
-    @api.constrains("customer_id")
-    def _check_unique_customer_rating(self):
-        for record in self:
-            if not record.customer_id:
-                continue
-            duplicate = self.search(
-                [
-                    ("customer_id", "=", record.customer_id.id),
-                    ("id", "!=", record.id),
-                ],
-                limit=1,
-            )
-            if duplicate:
-                raise ValidationError(_("A rating already exists for this customer."))
+    _unique_customer_id = models.Constraint(
+        "UNIQUE (customer_id)",
+        "Only one rating is allowed per customer.",
+    )
 
     @api.model
     def get_rating_map(self, partner_ids):
@@ -174,6 +155,7 @@ class CustomerRating(models.Model):
                 else:
                     vals = self._prepare_template_line_vals(template_line, default_score="0")
                     vals["rating_id"] = rating.id
+                    vals["customer_id"] = rating.customer_id.id
                     criteria_model.create(vals)
 
     def _snapshot_state(self):
@@ -185,7 +167,7 @@ class CustomerRating(models.Model):
                     "line_id": line.id,
                     "template_line_id": line.template_line_id.id or False,
                     "name": line.name or "",
-                    "score": line.score or "0",
+                    "score": line.score or 0,
                     "notes": line.notes or "",
                 }
             )
@@ -318,17 +300,31 @@ class CustomerRating(models.Model):
             self._log_history("manual_update", before_map)
         return result
 
+    def action_sync_from_template(self):
+        before_map = self._snapshot_map()
+        self._sync_from_template()
+        self._log_history("template_sync", before_map)
+        return True
+
 
 class CustomerRatingCriteria(models.Model):
     _name = "customer.rating.criteria"
     _description = "Customer Rating Criteria"
 
     rating_id = fields.Many2one("customer.rating", ondelete="cascade")
+    customer_id = fields.Many2one("res.partner", string="Customer", required=True, index=True)
     template_line_id = fields.Many2one("final.criteria.line", ondelete="set null", index=True)
     name = fields.Char(string="Criteria", required=True)
 
     score = fields.Selection(
-        [("0", "0"), ("1", "1"), ("2", "2"), ("3", "3"), ("4", "4"), ("5", "5")],
+        [
+            ("0", "0"),
+            ("1", "1"),
+            ("2", "2"),
+            ("3", "3"),
+            ("4", "4"),
+            ("5", "5"),
+        ],
         string="Score",
         default="0",
         required=True,
@@ -336,13 +332,30 @@ class CustomerRatingCriteria(models.Model):
 
     notes = fields.Char(string="Notes")
 
-    _sql_constraints = [
-        (
-            "rating_template_line_unique",
-            "unique(rating_id, template_line_id)",
-            "A template criterion can appear only once per customer rating.",
-        ),
-    ]
+    def init(self):
+        self._cr.execute(
+            """
+            UPDATE customer_rating_criteria c
+            SET customer_id = r.customer_id
+            FROM customer_rating r
+            WHERE c.customer_id IS NULL
+            AND c.rating_id = r.id
+            AND r.customer_id IS NOT NULL
+            """
+        )
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            if not vals.get("customer_id") and vals.get("rating_id"):
+                rating = self.env["customer.rating"].browse(vals["rating_id"])
+                vals["customer_id"] = rating.customer_id.id
+        return super().create(vals_list)
+
+    _unique_template_line = models.Constraint(
+        "UNIQUE (rating_id, template_line_id)",
+        "A template criterion can appear only once per customer rating.",
+    )
 
 
 class CustomerRatingHistory(models.Model):
