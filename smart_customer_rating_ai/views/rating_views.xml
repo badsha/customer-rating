@@ -149,19 +149,57 @@
     </record>
 
     <!-- Actions -->
-    <record id="action_customer_rating" model="ir.actions.act_window">
-        <field name="name">Rated Customers</field>
-        <field name="res_model">res.partner</field>
-        <field name="view_mode">list,form</field>
-        <field name="view_id" ref="view_rated_partner_list"/>
-        <field name="domain">[('customer_rating_ids', '!=', False)]</field>
-        <field name="search_view_id" ref="base.view_res_partner_filter"/>
-    </record>
-
     <record id="action_final_criteria" model="ir.actions.act_window">
         <field name="name">Rating Criteria Templates</field>
         <field name="res_model">final.criteria</field>
         <field name="view_mode">list,form</field>
+    </record>
+
+    <record id="view_partner_form_customer_rating_focus" model="ir.ui.view">
+        <field name="name">res.partner.form.customer.rating.focus</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_form"/>
+        <field name="mode">primary</field>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='vat']" position="after">
+                <label for="customer_rating_stars" string="Final Rating"/>
+                <div class="o_row">
+                    <field name="customer_rating_stars" widget="html" readonly="1"/>
+                </div>
+            </xpath>
+
+            <xpath expr="//notebook" position="inside">
+                <page string="Ratings" name="customer_rating_tab" autofocus="autofocus">
+                    <header>
+                        <button name="action_sync_customer_rating" type="object" string="Sync Rating" class="btn-primary"/>
+                        <button name="%(smart_customer_rating_ai.action_final_criteria)d" type="action" string="Configure Criteria" class="btn-secondary"/>
+                    </header>
+                    <div class="alert alert-info" role="alert" invisible="customer_rating_id">
+                        No rating found for this customer. Click "Sync Rating" to initialize.
+                    </div>
+                    <div class="alert alert-warning" role="alert" invisible="not customer_rating_id or criteria_ids">
+                        No criteria are configured for the selected assessment template. Click "Configure Criteria" to add criteria, then click "Sync Rating".
+                    </div>
+                    <field name="customer_rating_id" invisible="1"/>
+                    <field name="criteria_ids" readonly="0">
+                        <list editable="bottom" create="0" delete="0">
+                            <field name="name" readonly="1" force_save="1"/>
+                            <field name="score" widget="priority" force_save="1" options="{'max': 5}"/>
+                            <field name="notes" placeholder="Optional comments..." force_save="1"/>
+                        </list>
+                    </field>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="action_customer_rating" model="ir.actions.act_window">
+        <field name="name">Rated Customers</field>
+        <field name="res_model">res.partner</field>
+        <field name="view_mode">list,form</field>
+        <field name="view_ids" eval="[(5, 0, 0), (0, 0, {'view_mode': 'list', 'view_id': ref('view_rated_partner_list')}), (0, 0, {'view_mode': 'form', 'view_id': ref('view_partner_form_customer_rating_focus')})]"/>
+        <field name="domain">[('customer_rating_ids', '!=', False)]</field>
+        <field name="search_view_id" ref="base.view_res_partner_filter"/>
     </record>
 
     <!-- Menus -->
