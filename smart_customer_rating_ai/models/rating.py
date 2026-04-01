@@ -343,7 +343,10 @@ class CustomerRatingCriteria(models.Model):
             """
         )
 
+    @api.model_create_multi
     def create(self, vals_list):
+        if isinstance(vals_list, dict):
+            vals_list = [vals_list]
         for vals in vals_list:
             if not vals.get("customer_id") and vals.get("rating_id"):
                 rating = self.env["customer.rating"].browse(vals["rating_id"])

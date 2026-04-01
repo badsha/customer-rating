@@ -8,6 +8,11 @@ class ResPartner(models.Model):
     def init(self):
         self._cr.execute("ALTER TABLE res_partner DROP COLUMN IF EXISTS customer_rating_id")
 
+    def web_read(self, specification):
+        if isinstance(specification, dict) and specification.get("criteria_ids") is not None:
+            self._ensure_customer_rating()
+        return super().web_read(specification)
+
     customer_rating_ids = fields.One2many("customer.rating", "customer_id")
     customer_rating_id = fields.Many2one(
         "customer.rating",

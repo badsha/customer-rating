@@ -21,10 +21,14 @@
             <xpath expr="//notebook" position="inside">
                 <page string="Ratings" name="customer_rating_tab">
                     <header>
-                        <button name="action_sync_customer_rating" type="object" string="Sync Rating" class="btn-primary" invisible="criteria_ids"/>
+                        <button name="action_sync_customer_rating" type="object" string="Sync Rating" class="btn-primary"/>
+                        <button name="%(smart_customer_rating_ai.action_final_criteria)d" type="action" string="Configure Criteria" class="btn-secondary"/>
                     </header>
-                    <div class="alert alert-info" role="alert" invisible="criteria_ids">
+                    <div class="alert alert-info" role="alert" invisible="customer_rating_id">
                         No rating found for this customer. Click "Sync Rating" to initialize.
+                    </div>
+                    <div class="alert alert-warning" role="alert" invisible="not customer_rating_id or criteria_ids">
+                        No criteria are configured for the selected assessment template. Click "Configure Criteria" to add criteria, then click "Sync Rating".
                     </div>
                     <field name="customer_rating_id" invisible="1"/>
                     <field name="criteria_ids" readonly="0">
