@@ -11,19 +11,6 @@ class FinalCriteria(models.Model):
     line_ids = fields.One2many("final.criteria.line", "final_id", string="Criteria")
     criteria_count = fields.Integer(string="# Criteria", compute="_compute_criteria_count", store=True)
 
-    def init(self):
-        super().init()
-        # Ensure the default assessment record always exists.
-        self._cr.execute(
-            """
-            INSERT INTO final_criteria (name)
-            SELECT 'Criteria'
-            WHERE NOT EXISTS (
-                SELECT 1 FROM final_criteria WHERE lower(name) = 'criteria'
-            )
-            """
-        )
-
     def _compute_criteria_count(self):
         for rec in self:
             rec.criteria_count = len(rec.line_ids)

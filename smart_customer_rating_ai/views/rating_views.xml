@@ -1,6 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 <data>
+    <!-- Rated Customers -->
+    <record id="view_rated_partner_list" model="ir.ui.view">
+        <field name="name">res.partner.rated.list</field>
+        <field name="model">res.partner</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name"/>
+                <field name="customer_rating_stars" widget="html" string="Rating"/>
+            </list>
+        </field>
+    </record>
+
     <!-- Customer Rating Views -->
     <record id="view_customer_rating_list" model="ir.ui.view">
         <field name="name">customer.rating.list</field>
@@ -138,10 +150,12 @@
 
     <!-- Actions -->
     <record id="action_customer_rating" model="ir.actions.act_window">
-        <field name="name">Customer Ratings</field>
-        <field name="res_model">customer.rating</field>
+        <field name="name">Rated Customers</field>
+        <field name="res_model">res.partner</field>
         <field name="view_mode">list,form</field>
-        <field name="search_view_id" ref="view_customer_rating_search"/>
+        <field name="view_id" ref="view_rated_partner_list"/>
+        <field name="domain">[('customer_rating_ids', '!=', False)]</field>
+        <field name="search_view_id" ref="base.view_res_partner_filter"/>
     </record>
 
     <record id="action_final_criteria" model="ir.actions.act_window">
@@ -151,8 +165,10 @@
     </record>
 
     <!-- Menus -->
-    <menuitem id="menu_customer_rating_root" name="Customer Ratings" sequence="10"/>
-    <menuitem id="menu_customer_rating_main" name="View Ratings" parent="menu_customer_rating_root" action="action_customer_rating" sequence="10"/>
+    <menuitem id="menu_customer_rating_root" name="Customer Ratings" action="action_customer_rating" sequence="10"/>
+    <record id="menu_customer_rating_main" model="ir.ui.menu">
+        <field name="active" eval="False"/>
+    </record>
 
     <menuitem id="menu_customer_rating_config" name="Configuration" parent="menu_customer_rating_root" sequence="90"/>
     <menuitem id="menu_final_criteria" name="Assessment Templates" parent="menu_customer_rating_config" action="action_final_criteria" sequence="10"/>

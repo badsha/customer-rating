@@ -5,9 +5,6 @@ from odoo.orm.identifiers import NewId
 class ResPartner(models.Model):
     _inherit = "res.partner"
 
-    def init(self):
-        self._cr.execute("ALTER TABLE res_partner DROP COLUMN IF EXISTS customer_rating_id")
-
     def web_read(self, specification):
         if isinstance(specification, dict) and specification.get("criteria_ids") is not None:
             self._ensure_customer_rating()
@@ -25,11 +22,6 @@ class ResPartner(models.Model):
         string="Customer Rating",
         compute="_compute_customer_rating_display",
         sanitize=False,
-        readonly=True,
-    )
-    customer_rating_count = fields.Integer(
-        string="Rating Count",
-        compute="_compute_customer_rating_display",
         readonly=True,
     )
     criteria_ids = fields.One2many(
@@ -73,19 +65,3 @@ class ResPartner(models.Model):
         for partner in self:
             rating = partner.customer_rating_ids[:1]
             partner.customer_rating_stars = rating.rating_stars if rating else empty_stars
-            partner.customer_rating_count = 1 if rating else 0
-
-    def action_open_customer_rating(self):
-        self.ensure_one()
-        rating = self.customer_rating_ids[:1]
-        if not rating:
-            rating = self.env["customer.rating"].create({"customer_id": self.id})
-        rating._sync_from_template()
-        return {
-            "type": "ir.actions.act_window",
-            "name": "Customer Rating",
-            "res_model": "customer.rating",
-            "view_mode": "form",
-            "res_id": rating.id,
-            "target": "current",
-        }

@@ -5,12 +5,6 @@
         <field name="model">res.partner</field>
         <field name="inherit_id" ref="base.view_partner_form"/>
         <field name="arch" type="xml">
-            <xpath expr="//div[hasclass('oe_button_box')]" position="inside">
-                <button class="oe_stat_button" name="action_open_customer_rating" type="object" icon="fa-star">
-                    <field name="customer_rating_count" widget="statinfo" string="Rating"/>
-                </button>
-            </xpath>
-
             <xpath expr="//field[@name='vat']" position="after">
                 <label for="customer_rating_stars" string="Final Rating"/>
                 <div class="o_row">
