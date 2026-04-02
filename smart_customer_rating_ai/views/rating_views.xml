@@ -193,7 +193,7 @@
                                decoration-success="rating_bucket == 'high'"/>
                     </div>
                     <!-- Automatic rating: show rule insights -->
-                    <group string="Rule Breakdown" invisible="not is_automatic">
+                    <group string="Rule Breakdown" invisible="not is_automatic" col="1">
                         <div class="alert alert-info" role="alert"
                              invisible="insight_ids">
                             No rule insights yet. Click "Recompute Now" to evaluate all active rules.
@@ -217,7 +217,7 @@
                         </field>
                     </group>
                     <!-- Manual rating: show criteria scores -->
-                    <group string="Criteria Scores" invisible="is_automatic">
+                    <group string="Criteria Scores" invisible="is_automatic" col="1">
                         <field name="criteria_ids" nolabel="1">
                             <list editable="bottom" create="0" delete="0">
                                 <field name="name" string="Criteria" readonly="1" force_save="1"/>
@@ -227,7 +227,7 @@
                             </list>
                         </field>
                     </group>
-                    <group invisible="not notes">
+                    <group invisible="not notes" col="1">
                         <field name="notes" readonly="0" string="Notes"/>
                     </group>
                 </sheet>
