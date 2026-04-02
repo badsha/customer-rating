@@ -1,6 +1,6 @@
 {
     "name": "Smart Customer Rating AI",
-    "version": "19.0.1.1.0",
+    "version": "19.0.1.1.1",
     "summary": "AI-powered customer rating with badges, scoring, and smart insights",
     "author": "LogicLayer",
     "website": "https://logiclayerhq.com",
