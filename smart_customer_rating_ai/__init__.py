@@ -33,3 +33,27 @@ def post_init_hook(cr, registry):
             rec.unlink()
         # Remove the xmlid binding itself.
         data_row.unlink()
+
+    # Migrate legacy rule metric keys to the new data-driven metrics.
+    key_map = {
+        "revenue": "total_revenue",
+        "frequency": "order_frequency_12m",
+        "returns": "refund_ratio",
+        "overdue": "outstanding_amount",
+        "sentiment": "financial_health",
+    }
+    rules = env["ll.rating.rule"].search([("metric_key", "in", list(key_map.keys()))])
+    for rule in rules:
+        rule.metric_key = key_map.get(rule.metric_key, rule.metric_key)
+
+    # For older databases, map previous tag values to new segment values.
+    env.cr.execute("""
+        UPDATE customer_rating
+           SET rating_bucket = CASE
+               WHEN rating_bucket = 'low' THEN 'watchlist'
+               WHEN rating_bucket = 'medium' THEN 'rising'
+               WHEN rating_bucket = 'high' THEN 'champion'
+               ELSE rating_bucket
+           END
+         WHERE rating_bucket IN ('low', 'medium', 'high')
+    """)

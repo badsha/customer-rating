@@ -11,11 +11,27 @@
                         <setting title="Recompute Schedule" help="Enable daily automatic rating recalculation.">
                             <field name="ll_rating_auto_recompute"/>
                         </setting>
+                        <setting title="Metrics Cache Window"
+                                 help="How long deterministic customer metrics are cached before recomputation.">
+                            <field name="ll_rating_metrics_cache_hours"/>
+                        </setting>
                     </block>
                     <block title="AI Intelligence" name="ai_intelligence_section">
-                        <setting title="AI Provider" help="Choose which AI engine to use for sentiment analysis.">
+                        <setting title="Enable AI Enrichment"
+                                 help="Use AI to interpret structured ERP metrics into risk, loyalty and financial health scores.">
+                            <field name="ll_rating_ai_enabled"/>
+                        </setting>
+                        <setting title="AI Advisory Mode"
+                                 help="Choose whether AI advisory values are display-only or blended into automatic final score.">
+                            <field name="ll_rating_ai_advisory_mode"/>
+                            <div class="content-group" invisible="ll_rating_ai_advisory_mode != 'blend'">
+                                <label for="ll_rating_ai_blend_weight" string="Blend Weight"/>
+                                <field name="ll_rating_ai_blend_weight"/>
+                            </div>
+                        </setting>
+                        <setting title="AI Provider" help="Choose which AI engine to use for metrics interpretation.">
                             <field name="ll_rating_ai_provider"/>
-                            <div class="content-group" invisible="ll_rating_ai_provider == 'none'">
+                            <div class="content-group" invisible="not ll_rating_ai_enabled or ll_rating_ai_provider == 'none'">
                                 <div class="mt16" invisible="ll_rating_ai_provider != 'openai'">
                                     <label for="ll_rating_openai_api_key" string="OpenAI Key"/>
                                     <field name="ll_rating_openai_api_key" password="True"/>
@@ -29,6 +45,14 @@
                                     <field name="ll_rating_ollama_url" placeholder="http://localhost:11434"/>
                                     <label for="ll_rating_ollama_model" string="Model" class="mt8"/>
                                     <field name="ll_rating_ollama_model" placeholder="llama3"/>
+                                </div>
+                                <div class="mt16" invisible="ll_rating_ai_provider != 'custom'">
+                                    <setting title="Custom API Endpoint"
+                                             help="Configure a custom AI service endpoint. Leave empty to use predefined providers.">
+                                        <field name="ll_rating_custom_url" placeholder="https://your-ai-service.com/api/analyze"/>
+                                        <field name="ll_rating_custom_api_key" placeholder="Enter your API key"/>
+                                        <field name="ll_rating_custom_model" placeholder="Model name (e.g., gpt-4, claude-3)"/>
+                                    </setting>
                                 </div>
                             </div>
                         </setting>

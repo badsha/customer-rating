@@ -9,6 +9,11 @@
             <list create="0" edit="0" delete="0">
                 <field name="name"/>
                 <field name="customer_rating_stars" widget="html" string="Rating"/>
+                <field name="customer_segment" widget="badge"
+                       decoration-danger="customer_segment == 'watchlist'"
+                       decoration-warning="customer_segment == 'rising'"
+                       decoration-success="customer_segment == 'champion'"/>
+                <field name="customer_segment_score" optional="hide"/>
             </list>
         </field>
     </record>
@@ -24,9 +29,9 @@
                 <field name="rating" optional="hide"/>
                 <field name="rating_bucket"
                        widget="badge"
-                       decoration-danger="rating_bucket == 'low'"
-                       decoration-warning="rating_bucket == 'medium'"
-                       decoration-success="rating_bucket == 'high'"/>
+                       decoration-danger="rating_bucket == 'watchlist'"
+                       decoration-warning="rating_bucket == 'rising'"
+                       decoration-success="rating_bucket == 'champion'"/>
             </list>
         </field>
     </record>
@@ -37,9 +42,9 @@
         <field name="arch" type="xml">
             <search>
                 <field name="customer_id"/>
-                <filter name="tag_low" string="Low Tag" domain="[('rating_bucket','=','low')]"/>
-                <filter name="tag_medium" string="Medium Tag" domain="[('rating_bucket','=','medium')]"/>
-                <filter name="tag_high" string="High Tag" domain="[('rating_bucket','=','high')]"/>
+                <filter name="tag_watchlist" string="Watchlist" domain="[('rating_bucket','=','watchlist')]"/>
+                <filter name="tag_rising" string="Rising Star" domain="[('rating_bucket','=','rising')]"/>
+                <filter name="tag_champion" string="Champion" domain="[('rating_bucket','=','champion')]"/>
             </search>
         </field>
     </record>
@@ -50,6 +55,10 @@
         <field name="arch" type="xml">
             <form string="Customer Rating" create="0">
                 <header>
+                    <button name="action_clear_automated_rating" type="object"
+                            string="Clear Automated Rating" class="btn-secondary"
+                            confirm="Are you sure? This will remove all AI data and cached metrics."
+                            invisible="not is_automatic"/>
                     <button name="action_recompute_now" type="object"
                             string="Recompute Now" class="btn-primary"
                             invisible="not is_automatic"/>
@@ -67,6 +76,20 @@
                                 <field name="rating" readonly="1" class="oe_inline"/>
                             </div>
                         </group>
+                    </group>
+                    <group invisible="not is_automatic" col="2">
+                        <group>
+                            <field name="ai_persona_tag" readonly="1"/>
+                            <field name="ai_provider_used" readonly="1"/>
+                        </group>
+                        <group>
+                            <label for="ai_advisory_stars" string="AI Suggested Stars"/>
+                            <div class="o_row">
+                                <field name="ai_advisory_stars" widget="html" readonly="1" nolabel="1"/>
+                                <field name="ai_suggested_star" readonly="1" class="oe_inline"/>
+                            </div>
+                        </group>
+                        <field name="ai_persona_reason" readonly="1"/>
                     </group>
                     <notebook>
                         <page string="Criteria">
@@ -178,6 +201,9 @@
         <field name="arch" type="xml">
             <form string="Rating Breakdown" create="0" edit="1">
                 <header invisible="not is_automatic">
+                    <button name="action_clear_automated_rating" type="object"
+                            string="Clear Automated Rating" class="btn-secondary"
+                            confirm="Are you sure? This will remove all AI data and cached metrics."/>
                     <button name="action_recompute_now" type="object"
                             string="Recompute Now" class="btn-primary"/>
                 </header>
@@ -188,10 +214,24 @@
                             <field name="rating" readonly="1" class="oe_inline"/> / 5
                         </span>
                         <field name="rating_bucket" widget="badge" class="ms-2"
-                               decoration-danger="rating_bucket == 'low'"
-                               decoration-warning="rating_bucket == 'medium'"
-                               decoration-success="rating_bucket == 'high'"/>
+                               decoration-danger="rating_bucket == 'watchlist'"
+                               decoration-warning="rating_bucket == 'rising'"
+                               decoration-success="rating_bucket == 'champion'"/>
                     </div>
+                    <group invisible="not is_automatic" col="2">
+                        <group>
+                            <field name="ai_persona_tag" readonly="1"/>
+                            <field name="ai_provider_used" readonly="1"/>
+                        </group>
+                        <group>
+                            <label for="ai_advisory_stars" string="AI Suggested Stars"/>
+                            <div class="o_row">
+                                <field name="ai_advisory_stars" widget="html" readonly="1" nolabel="1"/>
+                                <field name="ai_suggested_star" readonly="1" class="oe_inline"/>
+                            </div>
+                        </group>
+                        <field name="ai_persona_reason" readonly="1"/>
+                    </group>
                     <!-- Automatic rating: show rule insights -->
                     <group string="Rule Breakdown" invisible="not is_automatic" col="1">
                         <div class="alert alert-info" role="alert"
@@ -282,9 +322,9 @@
                                 <field name="rating_stars" widget="html" string="Stars"/>
                                 <field name="rating" string="Score"/>
                                 <field name="rating_bucket" widget="badge"
-                                       decoration-danger="rating_bucket == 'low'"
-                                       decoration-warning="rating_bucket == 'medium'"
-                                       decoration-success="rating_bucket == 'high'"/>
+                                       decoration-danger="rating_bucket == 'watchlist'"
+                                       decoration-warning="rating_bucket == 'rising'"
+                                       decoration-success="rating_bucket == 'champion'"/>
                                 <field name="is_automatic" string="Auto" widget="boolean"/>
                             </list>
                         </field>
@@ -304,13 +344,27 @@
                             <field name="notes" readonly="1" placeholder="Optional comments..."/>
                         </list>
                     </field>
+                    <separator string="Data-Driven Insights"/>
+                    <group col="2">
+                        <group>
+                            <field name="ll_metric_avg_payment_delay_days" readonly="1"/>
+                            <field name="ll_metric_total_revenue" readonly="1"/>
+                            <field name="ll_metric_refund_ratio" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="ll_metric_risk_score" readonly="1"/>
+                            <field name="ll_metric_loyalty_score" readonly="1"/>
+                            <field name="ll_metric_financial_health" readonly="1"/>
+                        </group>
+                    </group>
+                    <field name="ll_metric_summary" readonly="1" placeholder="AI summary will appear here."/>
                 </page>
             </xpath>
         </field>
     </record>
 
     <record id="action_customer_rating" model="ir.actions.act_window">
-        <field name="name">Rated Customers</field>
+        <field name="name">Customer Intelligence</field>
         <field name="res_model">res.partner</field>
         <field name="view_mode">list,form</field>
         <field name="view_ids" eval="[(5, 0, 0), (0, 0, {'view_mode': 'list', 'view_id': ref('view_rated_partner_list')}), (0, 0, {'view_mode': 'form', 'view_id': ref('view_partner_form_customer_rating_focus')})]"/>
@@ -320,7 +374,7 @@
     </record>
 
     <!-- Menus -->
-    <menuitem id="menu_customer_rating_root" name="Customer Ratings" action="action_customer_rating" sequence="10"/>
+    <menuitem id="menu_customer_rating_root" name="Customer Intelligence" action="action_customer_rating" sequence="10"/>
 
     <menuitem id="menu_customer_rating_config" name="Configuration" parent="menu_customer_rating_root" sequence="90"/>
     <menuitem id="menu_final_criteria" name="Assessment Templates" parent="menu_customer_rating_config" action="action_final_criteria" sequence="10"/>

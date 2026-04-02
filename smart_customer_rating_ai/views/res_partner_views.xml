@@ -34,9 +34,9 @@
                             <field name="rating_stars" widget="html" string="Stars"/>
                             <field name="rating" string="Score"/>
                             <field name="rating_bucket" widget="badge"
-                                   decoration-danger="rating_bucket == 'low'"
-                                   decoration-warning="rating_bucket == 'medium'"
-                                   decoration-success="rating_bucket == 'high'"/>
+                                   decoration-danger="rating_bucket == 'watchlist'"
+                                   decoration-warning="rating_bucket == 'rising'"
+                                   decoration-success="rating_bucket == 'champion'"/>
                             <field name="is_automatic" string="Auto" widget="boolean"/>
                         </list>
                     </field>
@@ -55,6 +55,20 @@
                             <field name="notes" readonly="1" placeholder="Optional comments..."/>
                         </list>
                     </field>
+                    <separator string="Data-Driven Insights"/>
+                    <group col="2">
+                        <group>
+                            <field name="ll_metric_avg_payment_delay_days" readonly="1"/>
+                            <field name="ll_metric_total_revenue" readonly="1"/>
+                            <field name="ll_metric_refund_ratio" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="ll_metric_risk_score" readonly="1"/>
+                            <field name="ll_metric_loyalty_score" readonly="1"/>
+                            <field name="ll_metric_financial_health" readonly="1"/>
+                        </group>
+                    </group>
+                    <field name="ll_metric_summary" readonly="1" placeholder="AI summary will appear here."/>
                 </page>
             </xpath>
         </field>

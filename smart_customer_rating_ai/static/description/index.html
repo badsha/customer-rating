@@ -48,13 +48,52 @@
         <ul style="margin: 0; padding-left: 20px; color: #374151; line-height: 1.85; font-size: 15px;">
             <li>Multiple assessment templates with synchronized criteria lines.</li>
             <li>Manual scoring per template (stars) with automatic average score and star rendering.</li>
-            <li>Tag classification (Low, Medium, High) for quick segmentation.</li>
+            <li>Tag classification (Watchlist, Rising Star, Champion) for quick segmentation.</li>
             <li>Change timeline with who changed, when changed, and score impact.</li>
-            <li>Automated rating engine with configurable rules and “Rule Breakdown” (measured value, points, threshold met).</li>
-            <li>Optional AI sentiment rule (Ollama / OpenAI / Gemini) with provider visibility in insights.</li>
+            <li>Automated rating engine with configurable rules and "Rule Breakdown" (measured value, points, threshold met).</li>
+            <li>Optional AI sentiment analysis (Ollama / OpenAI / Gemini) with provider visibility in insights.</li>
+            <li>AI Advisory Mode: Off, Advisory-only, or Blend AI scores into final rating.</li>
             <li>Daily recompute scheduler for automated ratings (optional).</li>
             <li>Bridge-friendly design for Contacts, CRM, Sales, and other apps.</li>
         </ul>
+    </div>
+</section>
+
+<section class="oe_container" style="background: #ffffff;">
+    <div class="oe_row oe_spaced" style="max-width: 1120px; margin: 0 auto; padding: 12px 20px 24px;">
+        <h2 style="margin: 10px 0 14px; font-size: 29px; color: #0f172a;">AI Integration Setup</h2>
+        <div style="border: 1px solid #e5e7eb; border-radius: 12px; padding: 20px; background: #f8fafc; margin-bottom: 16px;">
+            <h3 style="margin: 0 0 12px; font-size: 20px; color: #111827;">🤖 Local Ollama Setup (Recommended)</h3>
+            <p style="margin: 0 0 12px; color: #374151; line-height: 1.65;">For local AI processing with Ollama:</p>
+            <div style="background: #f1f5f9; border-left: 4px solid #3b82f6; padding: 12px; margin: 0 0 12px; border-radius: 0 8px 8px 0;">
+                <p style="margin: 0; color: #1e293b; font-family: monospace; font-size: 14px;"><strong>1. Install Ollama:</strong><br>curl -fsSL https://ollama.ai/install.sh | sh</p>
+            </div>
+            <div style="background: #f1f5f9; border-left: 4px solid #3b82f6; padding: 12px; margin: 0 0 12px; border-radius: 0 8px 8px 0;">
+                <p style="margin: 0; color: #1e293b; font-family: monospace; font-size: 14px;"><strong>2. Pull Model:</strong><br>ollama pull llama3</p>
+            </div>
+            <div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 12px; margin: 0 0 12px; border-radius: 0 8px 8px 0;">
+                <p style="margin: 0; color: #92400e;"><strong>⚠️ Important for Docker Users:</strong></p>
+                <p style="margin: 4px 0 0; color: #92400e; font-size: 14px;">If Odoo runs in Docker, Ollama must listen on all interfaces:</p>
+                <p style="margin: 4px 0 0; color: #1e293b; font-family: monospace; font-size: 13px;">OLLAMA_HOST=0.0.0.0 ollama serve</p>
+                <p style="margin: 4px 0 0; color: #92400e; font-size: 14px;">Then use your host IP in Odoo settings (e.g., http://192.168.1.100:11434)</p>
+            </div>
+            <div style="background: #f1f5f9; border-left: 4px solid #3b82f6; padding: 12px; margin: 0 0 12px; border-radius: 0 8px 8px 0;">
+                <p style="margin: 0; color: #1e293b; font-family: monospace; font-size: 14px;"><strong>3. Configure in Odoo:</strong><br>Settings → Customer Rating → AI Intelligence<br>• AI Provider: Local Ollama<br>• Ollama URL: http://localhost:11434 (or host IP for Docker)<br>• Model: llama3</p>
+            </div>
+        </div>
+        
+        <div style="border: 1px solid #e5e7eb; border-radius: 12px; padding: 20px; background: #f8fafc;">
+            <h3 style="margin: 0 0 12px; font-size: 20px; color: #111827;">☁️ Cloud AI Options</h3>
+            <p style="margin: 0 0 8px; color: #374151; line-height: 1.65;">For cloud-based AI processing:</p>
+            <ul style="margin: 0 0 12px; padding-left: 20px; color: #374151; line-height: 1.65; font-size: 14px;">
+                <li><strong>OpenAI:</strong> Requires API key, uses GPT-4o model</li>
+                <li><strong>Google Gemini:</strong> Requires API key, uses Gemini Pro model</li>
+                <li><strong>Local Ollama:</strong> No API costs, runs locally, requires Ollama setup</li>
+            </ul>
+            <div style="background: #ecfdf5; border-left: 4px solid #10b981; padding: 12px; border-radius: 0 8px 8px 0;">
+                <p style="margin: 0; color: #065f46;"><strong>💡 Pro Tip:</strong> Start with Local Ollama for testing, then choose cloud provider for production scaling.</p>
+            </div>
+        </div>
     </div>
 </section>
 

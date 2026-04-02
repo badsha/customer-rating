@@ -4,7 +4,7 @@
         <field name="name">Customer Rating: Daily Recompute</field>
         <field name="model_id" ref="model_customer_rating"/>
         <field name="state">code</field>
-        <field name="code">model.cron_recompute_ratings()</field>
+        <field name="code">model.cron_recompute_metrics()</field>
         <field name="interval_number">1</field>
         <field name="interval_type">days</field>
         <field name="active">True</field>

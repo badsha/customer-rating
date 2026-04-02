@@ -11,3 +11,4 @@ access_ll_rating_rule_user,ll.rating.rule user,model_ll_rating_rule,base.group_s
 access_ll_rating_recompute_wizard_user,ll.rating.recompute.wizard user,model_ll_rating_recompute_wizard,base.group_system,1,1,1,1
 access_ll_rating_insight_user,ll.rating.insight user,model_ll_rating_insight,base.group_user,1,0,0,0
 access_ll_rating_insight_system,ll.rating.insight system,model_ll_rating_insight,base.group_system,1,1,1,1
+access_ll_partner_metrics_cache_system,ll.partner.metrics.cache system,model_ll_partner_metrics_cache,base.group_system,1,1,1,1

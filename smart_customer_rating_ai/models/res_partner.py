@@ -36,6 +36,19 @@ class ResPartner(models.Model):
         sanitize=False,
         readonly=True,
     )
+    customer_segment = fields.Selection(
+        [("watchlist", "Watchlist"), ("rising", "Rising Star"), ("champion", "Champion")],
+        string="Segment",
+        compute="_compute_customer_segment",
+        store=False,
+        readonly=True,
+    )
+    customer_segment_score = fields.Float(
+        string="Score",
+        compute="_compute_customer_segment",
+        store=False,
+        readonly=True,
+    )
 
     # Select which *manual/template* criteria are shown on the contact form.
     customer_rating_template_id = fields.Many2one(
@@ -76,6 +89,41 @@ class ResPartner(models.Model):
         "customer.rating.criteria",
         "customer_id",
         string="Selected Criteria Lines",
+    )
+    ll_metric_avg_payment_delay_days = fields.Float(
+        string="Avg Payment Delay (Days)",
+        compute="_compute_ll_metrics",
+        readonly=True,
+    )
+    ll_metric_total_revenue = fields.Float(
+        string="Total Revenue",
+        compute="_compute_ll_metrics",
+        readonly=True,
+    )
+    ll_metric_refund_ratio = fields.Float(
+        string="Refund Ratio",
+        compute="_compute_ll_metrics",
+        readonly=True,
+    )
+    ll_metric_risk_score = fields.Float(
+        string="Risk Score",
+        compute="_compute_ll_metrics",
+        readonly=True,
+    )
+    ll_metric_loyalty_score = fields.Float(
+        string="Loyalty Score",
+        compute="_compute_ll_metrics",
+        readonly=True,
+    )
+    ll_metric_financial_health = fields.Float(
+        string="Financial Health",
+        compute="_compute_ll_metrics",
+        readonly=True,
+    )
+    ll_metric_summary = fields.Char(
+        string="AI Summary",
+        compute="_compute_ll_metrics",
+        readonly=True,
     )
     criteria_ids = fields.One2many(
         "customer.rating.criteria",
@@ -178,6 +226,13 @@ class ResPartner(models.Model):
             rating = partner.customer_rating_ids.filtered(lambda r: r.is_primary)[:1] or partner.customer_rating_ids[:1]
             partner.customer_rating_stars = rating.rating_stars if rating else empty_stars
 
+    @api.depends("customer_rating_ids", "customer_rating_ids.is_primary", "customer_rating_ids.rating_bucket", "customer_rating_ids.rating")
+    def _compute_customer_segment(self):
+        for partner in self:
+            rating = partner.customer_rating_ids.filtered(lambda r: r.is_primary)[:1] or partner.customer_rating_ids[:1]
+            partner.customer_segment = rating.rating_bucket if rating else False
+            partner.customer_segment_score = rating.rating if rating else 0.0
+
     @api.depends(
         "customer_rating_template_id",
         "customer_rating_ids.final_criteria_id",
@@ -209,3 +264,15 @@ class ResPartner(models.Model):
             partner.selected_manual_has_criteria = bool(
                 partner.selected_manual_rating_id and partner.selected_manual_rating_id.criteria_ids
             )
+
+    def _compute_ll_metrics(self):
+        rule_model = self.env["ll.rating.rule"]
+        for partner in self:
+            values = rule_model._get_partner_metrics(partner)
+            partner.ll_metric_avg_payment_delay_days = values.get("avg_payment_delay_days", 0.0)
+            partner.ll_metric_total_revenue = values.get("total_revenue", 0.0)
+            partner.ll_metric_refund_ratio = values.get("refund_ratio", 0.0)
+            partner.ll_metric_risk_score = values.get("risk_score", 0.0)
+            partner.ll_metric_loyalty_score = values.get("loyalty_score", 0.0)
+            partner.ll_metric_financial_health = values.get("financial_health", 0.0)
+            partner.ll_metric_summary = values.get("summary", "")

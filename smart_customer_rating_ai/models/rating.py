@@ -41,9 +41,16 @@ class CustomerRating(models.Model):
     rating_stars = fields.Html(
         string="Final Rating", compute="_compute_rating_stars", sanitize=False,
     )
+    ai_persona_tag = fields.Char(string="AI Persona Tag", readonly=True, tracking=True)
+    ai_persona_reason = fields.Char(string="AI Persona Reason", readonly=True)
+    ai_suggested_star = fields.Float(string="AI Suggested Star", digits=(16, 2), readonly=True)
+    ai_advisory_stars = fields.Html(
+        string="AI Suggested Rating", compute="_compute_ai_advisory_stars", sanitize=False,
+    )
+    ai_provider_used = fields.Char(string="AI Provider Used", readonly=True)
     rating_bucket = fields.Selection(
-        [("low", "Low"), ("medium", "Medium"), ("high", "High")],
-        string="Tag",
+        [("watchlist", "Watchlist"), ("rising", "Rising Star"), ("champion", "Champion")],
+        string="Segment",
         compute="_compute_rating_bucket",
         store=True,
         index=True,
@@ -59,6 +66,19 @@ class CustomerRating(models.Model):
         "UNIQUE (customer_id, final_criteria_id)",
         "Only one rating of this template type is allowed per customer.",
     )
+
+    def init(self):
+        # Upgrade-safe migration from legacy low/medium/high buckets.
+        self.env.cr.execute("""
+            UPDATE customer_rating
+               SET rating_bucket = CASE
+                   WHEN rating_bucket = 'low' THEN 'watchlist'
+                   WHEN rating_bucket = 'medium' THEN 'rising'
+                   WHEN rating_bucket = 'high' THEN 'champion'
+                   ELSE rating_bucket
+               END
+             WHERE rating_bucket IN ('low', 'medium', 'high')
+        """)
 
     # -------------------------------------------------------------------------
     # Helpers
@@ -312,21 +332,46 @@ class CustomerRating(models.Model):
                 scores = [float(l.score) for l in record.criteria_ids if l.score]
                 record.rating = sum(scores) / len(scores) if scores else 0.0
 
-    @api.depends("rating")
+    @api.depends("rating", "customer_id", "is_automatic", "last_auto_score")
     def _compute_rating_bucket(self):
+        rule_model = self.env["ll.rating.rule"]
         for record in self:
+            metrics = {}
+            if record.customer_id:
+                metrics = rule_model._get_partner_metrics(record.customer_id)
+
+            risk = float(metrics.get("risk_score", 0.0) or 0.0)
+            loyalty = float(metrics.get("loyalty_score", 0.0) or 0.0)
+            health = float(metrics.get("financial_health", 0.0) or 0.0)
+
+            # AI-led segmentation where AI scores are available.
+            if risk or loyalty or health:
+                if risk <= 35.0 and loyalty >= 65.0 and health >= 65.0:
+                    record.rating_bucket = "champion"
+                elif risk >= 70.0 or health < 40.0:
+                    record.rating_bucket = "watchlist"
+                else:
+                    record.rating_bucket = "rising"
+                continue
+
+            # Fallback segmentation (works even when AI is disabled).
             val = record.rating or 0.0
             if val <= self._LOW_MAX:
-                record.rating_bucket = "low"
+                record.rating_bucket = "watchlist"
             elif val <= self._MEDIUM_MAX:
-                record.rating_bucket = "medium"
+                record.rating_bucket = "rising"
             else:
-                record.rating_bucket = "high"
+                record.rating_bucket = "champion"
 
     @api.depends("rating")
     def _compute_rating_stars(self):
         for record in self:
             record.rating_stars = self.render_stars_html(record.rating)
+
+    @api.depends("ai_suggested_star")
+    def _compute_ai_advisory_stars(self):
+        for record in self:
+            record.ai_advisory_stars = self.render_stars_html(record.ai_suggested_star or 0.0)
 
     # -------------------------------------------------------------------------
     # Rules engine
@@ -346,9 +391,11 @@ class CustomerRating(models.Model):
         total_weighted_score = 0.0
         total_weight = 0.0
         insight_vals = []
+        rule_model = self.env["ll.rating.rule"]
+        metrics = rule_model._get_partner_metrics(self.customer_id)
 
         for rule in rules:
-            points, metric_val, met, ai_provider_used = rule._evaluate(self.customer_id)
+            points, metric_val, met, ai_provider_used = rule._evaluate(self.customer_id, metrics=metrics)
             total_weighted_score += points * rule.weight
             total_weight += rule.weight * 100  # max possible per rule
             insight_vals.append({
@@ -364,6 +411,14 @@ class CustomerRating(models.Model):
         self.insight_ids.unlink()
         self.env['ll.rating.insight'].create(insight_vals)
 
+        # Advisory AI outputs for user-facing intelligence labels.
+        self.write({
+            "ai_persona_tag": metrics.get("persona_tag", ""),
+            "ai_persona_reason": metrics.get("persona_reason", ""),
+            "ai_suggested_star": metrics.get("suggested_star", 0.0),
+            "ai_provider_used": metrics.get("ai_provider_used", ""),
+        })
+
         return (total_weighted_score / total_weight * 5.0) if total_weight else 0.0
 
     def recompute_automatic_rating(self):
@@ -372,11 +427,26 @@ class CustomerRating(models.Model):
         Writes last_auto_score which triggers _compute_rating via @api.depends.
         Safe to call from wizard and cron.
         """
+        config = self.env['ir.config_parameter'].sudo()
+        mode = config.get_param('smart_customer_rating_ai.ai_advisory_mode', 'advisory')
+        raw_w = config.get_param('smart_customer_rating_ai.ai_blend_weight', '0.2')
+        try:
+            blend_w = float(raw_w)
+        except Exception:
+            blend_w = 0.2
+        blend_w = max(0.0, min(1.0, blend_w))
+
         for record in self.filtered('is_automatic'):
             before_map = record._snapshot_map()
-            new_score = record._run_rules_engine()
+            rules_score = record._run_rules_engine()
+            final_score = rules_score
+
+            if mode == 'blend':
+                ai_star = float(record.ai_suggested_star or 0.0)
+                final_score = ((1.0 - blend_w) * rules_score) + (blend_w * ai_star)
+
             # Writing last_auto_score triggers _compute_rating -> rating update
-            record.write({'last_auto_score': new_score})
+            record.write({'last_auto_score': final_score})
             record._log_history("scheduler", before_map)
 
     # -------------------------------------------------------------------------
@@ -418,19 +488,64 @@ class CustomerRating(models.Model):
         self._log_history("template_sync", before_map)
         return True
 
+    def action_clear_automated_rating(self):
+        """Clear all automated rating data including AI values and cache."""
+        self.ensure_one()
+        
+        # Take snapshot before clearing for change tracking
+        before_map = self._snapshot_map()
+        
+        # Clear AI values from the rating record
+        self.write({
+            'ai_persona_tag': False,
+            'ai_persona_reason': False,
+            'ai_suggested_star': 0.0,
+            'ai_provider_used': False,
+            'last_auto_score': 0.0,
+        })
+        
+        # Clear the metrics cache for this partner
+        cache_model = self.env['ll.partner.metrics.cache'].sudo()
+        cache_records = cache_model.search([('partner_id', '=', self.customer_id.id)])
+        if cache_records:
+            cache_records.unlink()
+        
+        # Clear AI insights
+        self.insight_ids.unlink()
+        
+        # Log the clear action
+        self._log_history("clear_automated", before_map)
+        
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'reload',
+        }
+
     def action_recompute_now(self):
         """Button action: recompute this automatic rating immediately."""
         self.ensure_one()
+        old_rating = self.rating
+        old_ai_star = self.ai_suggested_star
         self.recompute_automatic_rating()
+        
+        # Show notification with changes
+        message = _('Rating recomputed.')
+        if old_rating != self.rating:
+            message += _(' Score: %.1f → %.1f') % (old_rating, self.rating)
+        if old_ai_star != self.ai_suggested_star:
+            message += _(' AI Star: %.1f → %.1f') % (old_ai_star, self.ai_suggested_star)
+            
         return {
             'type': 'ir.actions.client',
-            'tag': 'display_notification',
+            'tag': 'reload',
             'params': {
-                'title': _('Done'),
-                'message': _('Rating recomputed. New score: %.2f') % self.rating,
-                'type': 'success',
-                'sticky': False,
-            },
+                'notification': {
+                    'title': _('Done'),
+                    'message': message,
+                    'type': 'success',
+                    'sticky': False,
+                }
+            }
         }
 
     # -------------------------------------------------------------------------
@@ -443,6 +558,18 @@ class CustomerRating(models.Model):
         if not config.get_param('smart_customer_rating_ai.auto_recompute', False):
             return
         self.search([('is_automatic', '=', True)]).recompute_automatic_rating()
+
+    @api.model
+    def cron_recompute_metrics(self):
+        """
+        Daily metrics refresh helper.
+        Uses ll.rating.rule cache strategy; does not crash on partial failures.
+        """
+        rule_model = self.env["ll.rating.rule"]
+        partners = self.env["res.partner"].search([("customer_rank", ">", 0)])
+        for partner in partners:
+            rule_model._get_partner_metrics(partner)
+        self.cron_recompute_ratings()
 
 
 class CustomerRatingCriteria(models.Model):
@@ -528,6 +655,7 @@ class CustomerRatingHistory(models.Model):
             ("create", "Create"),
             ("manual_update", "Manual Update"),
             ("template_sync", "Template Sync"),
+            ("clear_automated", "Clear Automated"),
             ("scheduler", "Scheduler"),
         ],
         required=True, default="manual_update",
