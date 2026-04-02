@@ -8,7 +8,7 @@
     "license": "OPL-1",
     "price": 9.99,
     "currency": "USD",
-    "depends": ["base", "contacts", "crm", "sales", "account"],
+    "depends": ["base", "contacts", "crm", "sale", "account", "mail"],
     "data": [
         "security/ir.model.access.csv",
         "data/rating_rule_data.xml",
