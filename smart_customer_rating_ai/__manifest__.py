@@ -1,6 +1,6 @@
 {
     "name": "Customer Rating Core",
-    "version": "19.0.1.0.0",
+    "version": "19.0.1.1.0",
     "summary": "Customer rating with criteria-based scoring (CRM, Sale, Contacts combined)",
     "author": "LogicLayer",
     "website": "https://logiclayerhq.com",
@@ -8,13 +8,19 @@
     "license": "OPL-1",
     "price": 9.99,
     "currency": "USD",
-    "depends": ["base", "mail", "contacts", "crm", "sale"],
+    "depends": ["base", "mail", "contacts", "crm", "sale", "account"],
     "data": [
         "security/ir.model.access.csv",
+        "data/rating_rule_data.xml",
+        "data/ir_cron_data.xml",
         "data/demo_data.xml",
         "views/rating_views.xml",
         "views/res_partner_views.xml",
+        "views/rating_rule_views.xml",
+        "views/res_config_settings_views.xml",
+        "wizard/ll_rating_recompute_wizard_views.xml",
     ],
+    "post_init_hook": "post_init_hook",
     "images": [
         "static/description/thumbnail.png",
     ],

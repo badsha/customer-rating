@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Intentionally left blank.
+         The "Batch Recompute" wizard/menu button was removed to avoid the confusing UI entry. -->
+</odoo>

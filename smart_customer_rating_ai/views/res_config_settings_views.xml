@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="res_config_settings_view_form" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.inherit.customer.rating</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="base.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form" position="inside">
+                <app data-string="Customer Rating" string="Customer Rating" name="smart_customer_rating_ai">
+                    <block title="Rating Automation" name="rating_automation_section">
+                        <setting title="Recompute Schedule" help="Enable daily automatic rating recalculation.">
+                            <field name="ll_rating_auto_recompute"/>
+                        </setting>
+                    </block>
+                    <block title="AI Intelligence" name="ai_intelligence_section">
+                        <setting title="AI Provider" help="Choose which AI engine to use for sentiment analysis.">
+                            <field name="ll_rating_ai_provider"/>
+                            <div class="content-group" invisible="ll_rating_ai_provider == 'none'">
+                                <div class="mt16" invisible="ll_rating_ai_provider != 'openai'">
+                                    <label for="ll_rating_openai_api_key" string="OpenAI Key"/>
+                                    <field name="ll_rating_openai_api_key" password="True"/>
+                                </div>
+                                <div class="mt16" invisible="ll_rating_ai_provider != 'gemini'">
+                                    <label for="ll_rating_gemini_api_key" string="Gemini Key"/>
+                                    <field name="ll_rating_gemini_api_key" password="True"/>
+                                </div>
+                                <div class="mt16" invisible="ll_rating_ai_provider != 'ollama'">
+                                    <label for="ll_rating_ollama_url" string="Ollama URL"/>
+                                    <field name="ll_rating_ollama_url" placeholder="http://localhost:11434"/>
+                                    <label for="ll_rating_ollama_model" string="Model" class="mt8"/>
+                                    <field name="ll_rating_ollama_model" placeholder="llama3"/>
+                                </div>
+                            </div>
+                        </setting>
+                    </block>
+                </app>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="action_customer_rating_config_settings" model="ir.actions.act_window">
+        <field name="name">Settings</field>
+        <field name="res_model">res.config.settings</field>
+        <field name="view_mode">form</field>
+        <field name="target">current</field>
+        <field name="context">{'module': 'smart_customer_rating_ai'}</field>
+    </record>
+
+    <menuitem id="menu_customer_rating_settings"
+              name="Settings"
+              parent="menu_customer_rating_config"
+              action="action_customer_rating_config_settings"
+              sequence="100"/>
+</odoo>

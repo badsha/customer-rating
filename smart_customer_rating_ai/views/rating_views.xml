@@ -6,7 +6,7 @@
         <field name="name">res.partner.rated.list</field>
         <field name="model">res.partner</field>
         <field name="arch" type="xml">
-            <list>
+            <list create="0" edit="0" delete="0">
                 <field name="name"/>
                 <field name="customer_rating_stars" widget="html" string="Rating"/>
             </list>
@@ -18,7 +18,7 @@
         <field name="name">customer.rating.list</field>
         <field name="model">customer.rating</field>
         <field name="arch" type="xml">
-            <list>
+            <list create="0">
                 <field name="customer_id"/>
                 <field name="rating_stars" widget="html" string="Rating"/>
                 <field name="rating" optional="hide"/>
@@ -48,7 +48,12 @@
         <field name="name">customer.rating.form</field>
         <field name="model">customer.rating</field>
         <field name="arch" type="xml">
-            <form>
+            <form string="Customer Rating" create="0">
+                <header>
+                    <button name="action_recompute_now" type="object"
+                            string="Recompute Now" class="btn-primary"
+                            invisible="not is_automatic"/>
+                </header>
                 <sheet>
                     <group>
                         <group>
@@ -70,6 +75,24 @@
                                     <field name="name" readonly="1" force_save="1"/>
                                     <field name="score" widget="priority" options="{'max': 5, 'hide_zero': False}"/>
                                     <field name="notes" placeholder="Optional comments..."/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Rule Insights" invisible="not is_automatic">
+                            <field name="insight_ids" readonly="1">
+                                <list create="0" delete="0" edit="0"
+                                      decoration-success="threshold_met == True"
+                                      decoration-muted="threshold_met == False">
+                                    <field name="rule_id" string="Rule"/>
+                                    <field name="rule_category" widget="badge"
+                                           decoration-info="rule_category == 'value'"
+                                           decoration-warning="rule_category == 'financial'"
+                                           decoration-success="rule_category == 'behavioral'"
+                                           decoration-primary="rule_category == 'ai'"/>
+                                    <field name="metric_value" string="Measured Value"/>
+                                    <field name="ai_provider" string="AI Provider"/>
+                                    <field name="points_awarded" string="Points"/>
+                                    <field name="threshold_met" string="Met" widget="boolean"/>
                                 </list>
                             </field>
                         </page>
@@ -148,7 +171,70 @@
         </field>
     </record>
 
-    <!-- Actions -->
+    <!-- Rating breakdown dialog — opened when clicking a row in the contact Ratings tab -->
+    <record id="view_customer_rating_dialog" model="ir.ui.view">
+        <field name="name">customer.rating.dialog</field>
+        <field name="model">customer.rating</field>
+        <field name="arch" type="xml">
+            <form string="Rating Breakdown" create="0" edit="1">
+                <header invisible="not is_automatic">
+                    <button name="action_recompute_now" type="object"
+                            string="Recompute Now" class="btn-primary"/>
+                </header>
+                <sheet>
+                    <div class="o_row mb-2">
+                        <field name="rating_stars" widget="html" nolabel="1"/>
+                        <span class="ms-2 fs-5 text-muted">
+                            <field name="rating" readonly="1" class="oe_inline"/> / 5
+                        </span>
+                        <field name="rating_bucket" widget="badge" class="ms-2"
+                               decoration-danger="rating_bucket == 'low'"
+                               decoration-warning="rating_bucket == 'medium'"
+                               decoration-success="rating_bucket == 'high'"/>
+                    </div>
+                    <!-- Automatic rating: show rule insights -->
+                    <group string="Rule Breakdown" invisible="not is_automatic">
+                        <div class="alert alert-info" role="alert"
+                             invisible="insight_ids">
+                            No rule insights yet. Click "Recompute Now" to evaluate all active rules.
+                        </div>
+                        <field name="insight_ids" nolabel="1" readonly="1"
+                               invisible="not insight_ids">
+                            <list create="0" delete="0" edit="0"
+                                  decoration-success="threshold_met == True"
+                                  decoration-muted="threshold_met == False">
+                                <field name="rule_id" string="Rule"/>
+                                <field name="rule_category" widget="badge"
+                                       decoration-info="rule_category == 'value'"
+                                       decoration-warning="rule_category == 'financial'"
+                                       decoration-success="rule_category == 'behavioral'"
+                                       decoration-primary="rule_category == 'ai'"/>
+                                <field name="metric_value" string="Measured"/>
+                                <field name="ai_provider" string="AI Provider"/>
+                                <field name="points_awarded" string="Points"/>
+                                <field name="threshold_met" string="Met" widget="boolean"/>
+                            </list>
+                        </field>
+                    </group>
+                    <!-- Manual rating: show criteria scores -->
+                    <group string="Criteria Scores" invisible="is_automatic">
+                        <field name="criteria_ids" nolabel="1">
+                            <list editable="bottom" create="0" delete="0">
+                                <field name="name" string="Criteria" readonly="1" force_save="1"/>
+                                <field name="score" widget="priority"
+                                       options="{'max': 5, 'hide_zero': False}" force_save="1"/>
+                                <field name="notes" string="Notes" force_save="1"/>
+                            </list>
+                        </field>
+                    </group>
+                    <group invisible="not notes">
+                        <field name="notes" readonly="0" string="Notes"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
     <record id="action_final_criteria" model="ir.actions.act_window">
         <field name="name">Rating Criteria Templates</field>
         <field name="res_model">final.criteria</field>
@@ -171,21 +257,51 @@
             <xpath expr="//notebook" position="inside">
                 <page string="Ratings" name="customer_rating_tab" autofocus="autofocus">
                     <header>
-                        <button name="action_sync_customer_rating" type="object" string="Sync Rating" class="btn-primary"/>
-                        <button name="%(smart_customer_rating_ai.action_final_criteria)d" type="action" string="Configure Criteria" class="btn-secondary"/>
+                        <button name="action_sync_customer_rating" type="object"
+                                string="Sync Rating" class="btn-primary"
+                                invisible="customer_rating_ids"/>
                     </header>
                     <div class="alert alert-info" role="alert" invisible="customer_rating_id">
                         No rating found for this customer. Click "Sync Rating" to initialize.
                     </div>
-                    <div class="alert alert-warning" role="alert" invisible="not customer_rating_id or criteria_ids">
-                        No criteria are configured for the selected assessment template. Click "Configure Criteria" to add criteria, then click "Sync Rating".
+                    <div class="alert alert-warning" role="alert"
+                         invisible="not selected_manual_rating_id or selected_manual_has_criteria">
+                        No criteria are configured for the selected assessment template.
+                        Click "Configure Criteria" to add criteria, then click "Sync Rating".
                     </div>
                     <field name="customer_rating_id" invisible="1"/>
-                    <field name="criteria_ids" readonly="0">
-                        <list editable="bottom" create="0" delete="0">
+                    <field name="customer_rating_ids" invisible="1"/>
+                    <group>
+                        <field name="customer_rating_ids" nolabel="1"
+                               context="{'form_view_ref': 'smart_customer_rating_ai.view_customer_rating_dialog'}">
+                            <list create="0" delete="0" edit="0"
+                                  decoration-info="is_primary">
+                                <field name="is_primary" string="Pri." widget="boolean_toggle"
+                                       readonly="1"/>
+                                <field name="final_criteria_id" string="Template"/>
+                                <field name="rating_stars" widget="html" string="Stars"/>
+                                <field name="rating" string="Score"/>
+                                <field name="rating_bucket" widget="badge"
+                                       decoration-danger="rating_bucket == 'low'"
+                                       decoration-warning="rating_bucket == 'medium'"
+                                       decoration-success="rating_bucket == 'high'"/>
+                                <field name="is_automatic" string="Auto" widget="boolean"/>
+                            </list>
+                        </field>
+                    </group>
+                    <separator string="Criteria Details (Manual Rating)"/>
+                    <field name="customer_rating_template_id" options="{'no_create': True}"/>
+                    <div class="o_row mb-2">
+                        <field name="selected_manual_rating_stars" widget="html" readonly="1" nolabel="1"/>
+                        <field name="selected_manual_rating_score" readonly="1" class="oe_inline"/>
+                    </div>
+                    <field name="selected_manual_rating_id" invisible="1"/>
+                    <field name="selected_manual_criteria_ids" readonly="1"
+                           domain="[('rating_id', '=', selected_manual_rating_id)]">
+                        <list create="0" delete="0">
                             <field name="name" readonly="1" force_save="1"/>
-                            <field name="score" widget="priority" force_save="1" options="{'max': 5}"/>
-                            <field name="notes" placeholder="Optional comments..." force_save="1"/>
+                            <field name="score" widget="priority" readonly="1" options="{'max': 5}"/>
+                            <field name="notes" readonly="1" placeholder="Optional comments..."/>
                         </list>
                     </field>
                 </page>
@@ -200,13 +316,11 @@
         <field name="view_ids" eval="[(5, 0, 0), (0, 0, {'view_mode': 'list', 'view_id': ref('view_rated_partner_list')}), (0, 0, {'view_mode': 'form', 'view_id': ref('view_partner_form_customer_rating_focus')})]"/>
         <field name="domain">[('customer_rating_ids', '!=', False)]</field>
         <field name="search_view_id" ref="base.view_res_partner_filter"/>
+        <field name="context">{'create': False}</field>
     </record>
 
     <!-- Menus -->
     <menuitem id="menu_customer_rating_root" name="Customer Ratings" action="action_customer_rating" sequence="10"/>
-    <record id="menu_customer_rating_main" model="ir.ui.menu">
-        <field name="active" eval="False"/>
-    </record>
 
     <menuitem id="menu_customer_rating_config" name="Configuration" parent="menu_customer_rating_root" sequence="90"/>
     <menuitem id="menu_final_criteria" name="Assessment Templates" parent="menu_customer_rating_config" action="action_final_criteria" sequence="10"/>

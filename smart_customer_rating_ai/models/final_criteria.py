@@ -7,13 +7,36 @@ class FinalCriteria(models.Model):
     _description = "Assessment"
     _order = "name"
 
-    name = fields.Char(string="Criteria", required=True)
-    line_ids = fields.One2many("final.criteria.line", "final_id", string="Criteria")
+    name = fields.Char(string="Template Name", required=True)
+    line_ids = fields.One2many("final.criteria.line", "final_id", string="Criteria Items")
     criteria_count = fields.Integer(string="# Criteria", compute="_compute_criteria_count", store=True)
 
     def _compute_criteria_count(self):
         for rec in self:
             rec.criteria_count = len(rec.line_ids)
+
+    @api.constrains("name")
+    def _check_unique_template_name(self):
+        """
+        Prevent duplicate template names (case-insensitive) so users can clearly
+        select the correct template on the customer rating tab.
+        """
+        for rec in self:
+            if not rec.name:
+                continue
+            # Table name is final_criteria for model "final.criteria".
+            self.env.cr.execute(
+                """
+                SELECT id
+                  FROM final_criteria
+                 WHERE lower(name) = lower(%s)
+                   AND id <> %s
+                 LIMIT 1
+                """,
+                (rec.name, rec.id),
+            )
+            if self.env.cr.fetchone():
+                raise UserError(_("Template names must be unique (case-insensitive)."))
 
     def unlink(self):
         protected = self.filtered(lambda rec: (rec.name or "").strip().lower() == "criteria")

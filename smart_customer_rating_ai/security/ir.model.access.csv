@@ -7,3 +7,7 @@ access_final_criteria_line_read_user,final.criteria.line read,model_final_criter
 access_final_criteria_user,final.criteria user,model_final_criteria,base.group_system,1,1,1,1
 access_final_criteria_line_user,final.criteria.line user,model_final_criteria_line,base.group_system,1,1,1,1
 access_final_criteria_line_delete_wizard_user,final.criteria.line.delete.wizard user,model_final_criteria_line_delete_wizard,base.group_system,1,1,1,1
+access_ll_rating_rule_user,ll.rating.rule user,model_ll_rating_rule,base.group_system,1,1,1,1
+access_ll_rating_recompute_wizard_user,ll.rating.recompute.wizard user,model_ll_rating_recompute_wizard,base.group_system,1,1,1,1
+access_ll_rating_insight_user,ll.rating.insight user,model_ll_rating_insight,base.group_user,1,0,0,0
+access_ll_rating_insight_system,ll.rating.insight system,model_ll_rating_insight,base.group_system,1,1,1,1
