@@ -23,8 +23,8 @@
         <h2 style="margin: 10px 0 16px; font-size: 29px; color: #0f172a;">Why Teams Use This</h2>
         <div style="display: grid; grid-template-columns: 1fr; gap: 14px;">
             <div style="border: 1px solid #e5e7eb; border-radius: 12px; padding: 16px; background: #ffffff;">
-                <h3 style="margin: 0 0 8px; font-size: 18px; color: #111827;">One Customer, One Rating Record</h3>
-                <p style="margin: 0; line-height: 1.65; color: #374151;">Prevents duplicates and keeps each customer profile reliable for day-to-day decisions.</p>
+                <h3 style="margin: 0 0 8px; font-size: 18px; color: #111827;">Multi-Template Assessments</h3>
+                <p style="margin: 0; line-height: 1.65; color: #374151;">Maintain multiple assessment templates per customer (e.g., Sales fit, Risk, Support). Each template stays consistent across all customers.</p>
             </div>
             <div style="border: 1px solid #e5e7eb; border-radius: 12px; padding: 16px; background: #ffffff;">
                 <h3 style="margin: 0 0 8px; font-size: 18px; color: #111827;">Master Assessment Sync</h3>
@@ -35,8 +35,8 @@
                 <p style="margin: 0; line-height: 1.65; color: #374151;">Tag badge and stars provide quick risk/opportunity scanning in list and form views.</p>
             </div>
             <div style="border: 1px solid #e5e7eb; border-radius: 12px; padding: 16px; background: #ffffff;">
-                <h3 style="margin: 0 0 8px; font-size: 18px; color: #111827;">Follow-up Discipline</h3>
-                <p style="margin: 0; line-height: 1.65; color: #374151;">Scheduler creates re-evaluation activities so high-value accounts are never ignored.</p>
+                <h3 style="margin: 0 0 8px; font-size: 18px; color: #111827;">Automated Rating + AI Insights</h3>
+                <p style="margin: 0; line-height: 1.65; color: #374151;">Compute an automated rating from configurable rules, including optional AI sentiment analysis (Ollama / OpenAI / Gemini) with a transparent rule breakdown.</p>
             </div>
         </div>
     </div>
@@ -46,11 +46,13 @@
     <div class="oe_row oe_spaced" style="max-width: 1120px; margin: 0 auto; padding: 12px 20px 24px;">
         <h2 style="margin: 10px 0 14px; font-size: 29px; color: #0f172a;">Key Features</h2>
         <ul style="margin: 0; padding-left: 20px; color: #374151; line-height: 1.85; font-size: 15px;">
-            <li>Assessment configuration with synchronized criteria lines.</li>
-            <li>Automatic average score and star rendering.</li>
+            <li>Multiple assessment templates with synchronized criteria lines.</li>
+            <li>Manual scoring per template (stars) with automatic average score and star rendering.</li>
             <li>Tag classification (Low, Medium, High) for quick segmentation.</li>
             <li>Change timeline with who changed, when changed, and score impact.</li>
-            <li>Re-evaluation scheduler and follow-up activities.</li>
+            <li>Automated rating engine with configurable rules and “Rule Breakdown” (measured value, points, threshold met).</li>
+            <li>Optional AI sentiment rule (Ollama / OpenAI / Gemini) with provider visibility in insights.</li>
+            <li>Daily recompute scheduler for automated ratings (optional).</li>
             <li>Bridge-friendly design for Contacts, CRM, Sales, and other apps.</li>
         </ul>
     </div>
@@ -93,7 +95,7 @@
         <div style="border: 1px solid #e5e7eb; border-radius: 12px; background: #ffffff; padding: 16px;">
             <p style="margin: 0 0 8px; color: #374151;"><strong>Module:</strong> Customer Rating</p>
             <p style="margin: 0 0 8px; color: #374151;"><strong>Version:</strong> 19.0</p>
-            <p style="margin: 0 0 8px; color: #374151;"><strong>Dependencies:</strong> base, mail</p>
+            <p style="margin: 0 0 8px; color: #374151;"><strong>Dependencies:</strong> base, mail, contacts, crm, sale, account</p>
             <p style="margin: 0 0 8px; color: #374151;"><strong>License:</strong> OPL-1</p>
             <p style="margin: 0; color: #374151;"><strong>Author:</strong> LogicLayer</p>
         </div>
