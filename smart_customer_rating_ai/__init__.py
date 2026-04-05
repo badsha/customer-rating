@@ -4,14 +4,17 @@ from . import wizard
 from odoo import api, SUPERUSER_ID
 
 
-def post_init_hook(cr, registry):
+def post_init_hook(env_or_cr, registry=None):
     """
     Remove leftover menu/action entries when the wizard/menu XML is removed.
 
     Odoo does not automatically delete existing records from the database when an
     XML record is removed from the module codebase, so this cleans up the UI.
     """
-    env = api.Environment(cr, SUPERUSER_ID, {})
+    if hasattr(env_or_cr, "cr"):
+        env = env_or_cr
+    else:
+        env = api.Environment(env_or_cr, SUPERUSER_ID, {})
     imd = env["ir.model.data"]
 
     # (module, name, model)
